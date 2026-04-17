@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordWise | Minimalist Vocab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            transition: transform 0.1s ease;
+        }
+        .btn-gradient:active { transform: scale(0.96); }
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-sm w-full glass-card rounded-[2.5rem] shadow-2xl overflow-hidden relative">
+        <div class="px-8 pt-10 pb-6 text-center">
+            <div class="flex justify-center mb-4">
+                <div id="loader" class="loader"></div>
+            </div>
+            <h1 id="word-display" class="text-4xl font-semibold tracking-tight text-white capitalize">Hello</h1>
+            <div class="flex items-center justify-center gap-2 mt-2">
+                <p id="phonetic" class="text-indigo-400 font-light tracking-wide">/həˈloʊ/</p>
+                <button onclick="speakWord()" class="p-1 hover:text-white text-indigo-300 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="px-8 pb-10 space-y-6">
+            <div class="space-y-1">
+                <span class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Definition</span>
+                <p id="definition" class="text-slate-300 leading-relaxed text-sm">
+                    A common greeting used when meeting someone.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Synonyms</span>
+                    <div id="synonyms" class="text-xs text-indigo-300 flex flex-wrap gap-1">--</div>
+                </div>
+                <div class="space-y-1">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Antonyms</span>
+                    <div id="antonyms" class="text-xs text-rose-300 flex flex-wrap gap-1">--</div>
+                </div>
+            </div>
+
+            <button onclick="fetchNewWord()" class="w-full btn-gradient py-4 rounded-2xl text-white font-semibold shadow-lg shadow-indigo-500/20 mt-4">
+                Discover New Word
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const words = ["ubiquitous", "cacophony", "ephemeral", "loquacious", "mitigate", "paradigm", "quintessential", "rhetoric", "stoic", "venerable", "zealous", "facetious", "gregarious", "innocuous"];
+
+        async function fetchNewWord() {
+            const loader = document.getElementById('loader');
+            const wordEl = document.getElementById('word-display');
+            const defEl = document.getElementById('definition');
+            const synEl = document.getElementById('synonyms');
+            const antEl = document.getElementById('antonyms');
+            const phoEl = document.getElementById('phonetic');
+
+            loader.style.display = 'block';
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${randomWord}`);
+                const data = await res.json();
+                const main = data[0];
+
+                wordEl.innerText = main.word;
+                phoEl.innerText = main.phonetic || "";
+                defEl.innerText = main.meanings[0].definitions[0].definition;
+
+                // Sync/Ant handling
+                const s = main.meanings[0].synonyms.slice(0, 3);
+                synEl.innerText = s.length ? s.join(', ') : 'None';
+                
+                const a = main.meanings[0].antonyms.slice(0, 3);
+                antEl.innerText = a.length ? a.join(', ') : 'None';
+
+            } catch (err) {
+                defEl.innerText = "Error fetching word. Try again!";
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function speakWord() {
+            const word = document.getElementById('word-display').innerText;
+            const msg = new SpeechSynthesisUtterance(word);
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
+        }
+
+        // Initialize with a word
+        window.onload = fetchNewWord;
+    </script>
+</body>
+</html>
